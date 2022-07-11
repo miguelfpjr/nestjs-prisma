@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/PrismaService';
-import { UsuarioDTO } from './usuarios.dto';
+import { hashPassword } from 'src/util/bcrypt';
+import { CreateUsuarioDTO } from './dto/create-usuarios.dto';
+import { UpdateUsuarioDTO } from './dto/update-usuarios.dto';
 
 @Injectable()
 export class UsuariosService {
     constructor(private prisma: PrismaService){}
 
-    async create(data: UsuarioDTO){
+    async create(data: CreateUsuarioDTO){
         const userExists = this.prisma.user.findFirst({
             where: {
                 login: data.login
@@ -18,7 +20,12 @@ export class UsuariosService {
         }
 
         const user = await this.prisma.user.create({
-            data,
+            data:{
+                email: data.email,
+                login: data.login,
+                nome: data.nome,
+                senha: hashPassword(data.senha)
+            }
         })
 
         return user
@@ -38,7 +45,7 @@ export class UsuariosService {
         return userFind;
     }
 
-    async update(login: string, data: UsuarioDTO){
+    async update(login: string, data: UpdateUsuarioDTO){
         const userFind = await this.prisma.user.findUnique({
             where: {
                 login
